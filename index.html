@@ -1,0 +1,817 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Espejos del Alba</title>
+<meta name="description" content="Puzle de luz y espejos: lleva a cada diana su color exacto.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=Alegreya+Sans:wght@400;700;800&display=swap" rel="stylesheet">
+<style>:root {
+  --fondo: #fbf1e6; --fondo2: #f6e3d3; --tinta: #2b2233; --suave: #6b5a74; --oro: #d99a2b; --oro2: #f2c86b;
+  --malva: #c9b3e6; --rosa: #f4b7a8; --cielo: #bcd9f2; --marco: #fffaf3; --sombra: rgba(43, 34, 51, .12);
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+html { background: #fbf4ea; }
+body {
+  font-family: 'Alegreya Sans', system-ui, sans-serif; color: var(--tinta);
+  background: linear-gradient(180deg, #f7d9cf 0%, #fbeee2 22%, var(--fondo) 50%, #fbf4ea 100%) fixed;
+  min-height: 100vh;
+}
+header { text-align: center; padding: 22px 16px 6px; }
+h1 { font-family: 'Cinzel Decorative', serif; font-size: clamp(28px, 6vw, 46px); margin: 0; letter-spacing: .5px; color: #8a4b2a; text-shadow: 0 2px 0 #fff8; }
+.lema { margin: 4px 0 0; color: var(--suave); font-size: 18px; }
+main { display: flex; gap: 22px; justify-content: center; align-items: flex-start; padding: 12px 16px 40px; flex-wrap: wrap; }
+.juego { width: min(640px, 100%); }
+.cabecera-nivel { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; margin-bottom: 8px; }
+.cabecera-nivel h2 { margin: 0; font-size: 26px; }
+.escalon-nivel { color: var(--suave); font-weight: 700; }
+.tablero { width: 100%; height: auto; display: block; touch-action: manipulation; user-select: none; }
+.tablero .marco { fill: var(--marco); stroke: var(--tinta); stroke-width: 6; }
+.tablero .rotulo { font: 800 30px 'Alegreya Sans', sans-serif; fill: var(--suave); text-anchor: middle; }
+.tablero .toque { cursor: pointer; }
+.tablero .toque:hover { fill: rgba(255, 255, 255, .18); }
+.cuenta { text-align: center; color: var(--suave); font-weight: 700; margin: 8px 0 4px; }
+.bandeja { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 6px 0 10px; }
+.bandeja .pieza { position: relative; width: 92px; padding: 6px 4px 4px; border-radius: 16px; border: 3px solid #2b223322; background: #fffaf3; cursor: pointer; display: flex; flex-direction: column; align-items: center; font: inherit; }
+.bandeja .pieza svg { width: 58px; height: 58px; }
+.bandeja .pieza .nombre { font-size: 13px; font-weight: 700; line-height: 1.1; text-align: center; }
+.bandeja .pieza .cuantas { position: absolute; top: 2px; right: 6px; background: var(--oro); color: #fff; font-weight: 800; border-radius: 99px; min-width: 24px; padding: 1px 6px; font-size: 15px; }
+.bandeja .pieza.sel { border-color: var(--oro); box-shadow: 0 0 0 4px var(--oro2); }
+.bandeja .pieza.agotada { opacity: .45; }
+.bandeja .pieza.agotada .cuantas { background: #9a8fa3; }
+.acciones { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+button { font: 800 17px 'Alegreya Sans', sans-serif; border-radius: 14px; border: 3px solid var(--tinta); background: var(--oro2); color: var(--tinta); padding: 9px 18px; cursor: pointer; box-shadow: 0 3px 0 var(--tinta); }
+button:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--tinta); }
+button.secundario { background: #fffaf3; }
+.aviso { margin: 12px auto 0; max-width: 560px; min-height: 24px; text-align: center; font-size: 17px; line-height: 1.4; }
+.reglas { background: #fffaf3; border: 3px solid #2b223322; border-radius: 16px; padding: 10px 16px; margin-bottom: 10px; font-size: 16.5px; line-height: 1.4; }
+.reglas ul { margin: 4px 0 8px; padding-left: 22px; }
+.niveles { width: min(260px, 100%); background: #fffaf3cc; border: 3px solid #2b223322; border-radius: 18px; padding: 10px 14px 14px; }
+.niveles h2 { margin: 2px 0 6px; font-size: 22px; }
+.escalon h3 { margin: 10px 0 6px; font-size: 16px; color: var(--suave); }
+.escalon .botones { display: flex; flex-wrap: wrap; gap: 6px; }
+.escalon button.nivel { width: 42px; height: 42px; padding: 0; border-radius: 12px; font-size: 17px; background: #fffaf3; box-shadow: 0 2px 0 var(--tinta); }
+.escalon button.nivel.hecho { background: #bfe6b6; }
+.escalon button.nivel.actual { background: var(--oro2); }
+.victoria { position: fixed; inset: 0; background: rgba(251, 241, 230, .82); display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 5; }
+.victoria[hidden], .reglas[hidden], #siguiente[hidden] { display: none; }
+.victoria .tarjeta { background: #fffaf3; border: 4px solid var(--tinta); border-radius: 22px; padding: 18px 26px 22px; text-align: center; box-shadow: 0 10px 30px var(--sombra); max-width: 360px; }
+.victoria .sol { font-size: 54px; color: var(--oro); line-height: 1; }
+.victoria h2 { margin: 6px 0; font-size: 30px; }
+@media (max-width: 700px) {
+  main { padding: 8px 12px 30px; }
+  .bandeja .pieza { width: 78px; }
+  .bandeja .pieza svg { width: 48px; height: 48px; }
+  .niveles { width: 100%; }
+}
+.entradilla { margin: 4px 0 0; color: var(--suave); font-style: italic; font-size: 16.5px; max-width: 460px; }
+.colores { display: flex; flex-wrap: wrap; gap: 8px; margin: 2px 0 10px; }
+.colores .ficha { display: flex; align-items: center; gap: 6px; background: #fffaf3; border: 2px solid #2b223322; border-radius: 12px; padding: 3px 8px 3px 4px; font-size: 15px; }
+.colores .ficha svg { width: 30px; height: 30px; }
+.colores .ficha .muestra { width: 18px; height: 18px; border-radius: 50%; border: 2px solid #2b2233; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Espejos del Alba</h1>
+  <p class="lema">Lleva a cada diana la luz de su color.</p>
+</header>
+<main>
+  <section class="juego">
+    <div class="cabecera-nivel">
+      <div><h2 id="titulo-nivel"></h2><div id="escalon-nivel" class="escalon-nivel"></div><p id="entradilla" class="entradilla"></p></div>
+      <button id="reglas-boton" class="secundario">Cómo se juega</button>
+    </div>
+    <div id="reglas" class="reglas" hidden>
+      <p><b>El objetivo.</b> Cada <b>diana</b> tiene que recibir <b>exactamente</b> la luz de su color: ni le puede faltar una luz ni sobrarle otra. La diana recoge la luz que le llega por cualquiera de sus cuatro lados.</p>
+      <p><b>Las piezas.</b> Coloca <b>todas</b> las piezas de la bandeja, y cada una tiene que recibir luz: ninguna puede quedar a oscuras (también la piedra y el filtro que apaga un rayo: les llega luz, aunque la corten).</p>
+      <ul>
+        <li><b>Espejo:</b> desvía la luz 90°, por sus dos caras. Tócalo para girarlo.</li>
+        <li><b>Divisor:</b> la luz sigue recta y además se desvía, como en un espejo. Las dos salidas llevan el color entero.</li>
+        <li><b>Filtro:</b> la luz sigue recta, pero solo con la parte de su color. Si no tienen ningún color en común, el rayo se apaga.</li>
+        <li><b>Cristal:</b> la luz sigue recta y sale del color del cristal, sea del color que sea al entrar.</li>
+        <li><b>Piedra:</b> corta la luz.</li>
+      </ul>
+      <p><b>Los colores.</b> Rojo, verde y azul. Se mezclan solo en las dianas; los rayos se cruzan sin mezclarse.</p>
+      <div id="colores" class="colores"></div>
+      <p><b>Lo que corta la luz.</b> Los muros, las piedras, los emisores y las propias dianas: la luz no pasa a través de ellos.</p>
+      <p><b>Cómo jugar.</b> Elige una pieza en la bandeja y toca una casilla libre. Toca una pieza puesta para girarla (o quitarla, si no se gira). Con «Quitar», tocas una pieza y vuelve a la bandeja. No hay límite de movimientos: prueba, mira adónde va la luz y rectifica. Cada nivel tiene una sola solución.</p>
+    </div>
+    <svg id="tablero" class="tablero" role="img" aria-label="Tablero"></svg>
+    <div id="cuenta" class="cuenta"></div>
+    <div id="bandeja" class="bandeja"></div>
+    <div class="acciones">
+      <button id="comprobar">Comprobar</button>
+      <button id="pista" class="secundario">Pista</button>
+      <button id="reiniciar" class="secundario">Reiniciar</button>
+    </div>
+    <div id="aviso" class="aviso" aria-live="polite"></div>
+  </section>
+  <aside class="niveles">
+    <h2>Niveles</h2>
+    <div id="lista"></div>
+  </aside>
+</main>
+<div id="victoria" class="victoria" hidden>
+  <div class="tarjeta">
+    <div class="sol">☀</div>
+    <h2>¡Resuelto!</h2>
+    <p id="victoria-texto"></p>
+    <div class="acciones"><button id="siguiente">Siguiente nivel</button><button id="cerrar" class="secundario">Cerrar</button></div>
+  </div>
+</div>
+<script>// Espejos del Alba · motor de la luz (REGLAS.md v2). Sirve igual en Node y en el navegador.
+//  - nivel(json): prepara un nivel (tablero, piezas fijas, inventario).
+//  - luz(N, colocadas): calcula la luz (§4) con las piezas colocadas (Map casilla -> pieza).
+//  - comprobar(N, colocadas): ¿es solución? (§6), con el detalle de cada diana y de cada pieza.
+// Casilla k = f * C + c. Direcciones: 0 N, 1 E, 2 S, 3 O. Colores en bits: R = 1, V = 2, A = 4.
+(function (raiz, fabrica) {
+  if (typeof module === 'object' && module.exports) module.exports = fabrica();
+  else raiz.Espejos = fabrica();
+})(typeof self !== 'undefined' ? self : this, function () {
+  'use strict';
+  const DIRS = 'NESO', DF = [-1, 0, 1, 0], DC = [0, 1, 0, -1];
+  // espejo «/»: E -> N, O -> S, N -> E, S -> O; espejo «\»: E -> S, O -> N, N -> O, S -> E (REGLAS §3)
+  const REFLEJO = { '/': [1, 0, 3, 2], '\\': [3, 2, 1, 0] };
+  const LUCES = 'RVA';
+  const aBits = (txt) => { let m = 0; for (const ch of txt) { const i = LUCES.indexOf(ch); if (i < 0) throw new Error('color raro: ' + txt); m |= 1 << i; } if (!m) throw new Error('color vacío'); return m; };
+  const aTexto = (m) => [...LUCES].filter((_, i) => m & (1 << i)).join('');
+  const NOMBRE_COLOR = { R: 'rojo', V: 'verde', A: 'azul', RV: 'amarillo', RA: 'magenta', VA: 'cian', RVA: 'blanco' };
+  // clases de pieza colocable: espejo, divisor, piedra, filtro:<color>, cristal:<color>
+  const ORIENTABLE = { espejo: true, divisor: true };
+  function pieza(clase, ori) {
+    const [tipo, col] = clase.split(':');
+    const p = { tipo, clase };
+    if (ORIENTABLE[tipo]) { if (ori !== '/' && ori !== '\\') throw new Error('orientación rara: ' + ori); p.ori = ori; }
+    if (tipo === 'filtro' || tipo === 'cristal') p.color = aBits(col);
+    if (!['espejo', 'divisor', 'filtro', 'cristal', 'piedra'].includes(tipo)) throw new Error('clase rara: ' + clase);
+    return p;
+  }
+
+  // validez (REGLAS v3 §9): colores canónicos (R, V, A y sus uniones en ese orden), F y C de 4 a 10, inventario con claves
+  // conocidas y cantidades enteras no negativas
+  const CANON = ['R', 'V', 'A', 'RV', 'RA', 'VA', 'RVA'];
+  const colorOK = (c) => { if (!CANON.includes(c)) throw new Error('color no canónico: ' + c); return c; };
+  function nivel(j) {
+    const F = j.F, C = j.C;
+    if (!(Number.isInteger(F) && Number.isInteger(C) && F >= 4 && F <= 10 && C >= 4 && C <= 10)) throw new Error('F y C tienen que ir de 4 a 10');
+    if (!Array.isArray(j.tablero) || j.tablero.length !== F || j.tablero.some((l) => l.length !== C)) throw new Error('tablero mal formado');
+    for (const p of j.fijas || []) if (p.color !== undefined) colorOK(p.color);
+    for (const [cl, n] of Object.entries(j.inventario || {})) {
+      if (!Number.isInteger(n) || n < 0) throw new Error('cantidad rara en el inventario: ' + cl);
+      const [t, c, sobra] = cl.split(':');
+      if (sobra !== undefined || !(['espejo', 'divisor', 'piedra'].includes(t) ? c === undefined : ['filtro', 'cristal'].includes(t) && c !== undefined && colorOK(c))) throw new Error('clase rara en el inventario: ' + cl);
+    }
+    const muro = new Uint8Array(F * C), fija = new Array(F * C).fill(null);
+    for (let f = 0; f < F; f++) for (let c = 0; c < C; c++) {
+      const ch = j.tablero[f][c];
+      if (ch === '#') muro[f * C + c] = 1; else if (ch !== '.') throw new Error('casilla rara: ' + ch);
+    }
+    const emisores = [], dianas = [];
+    for (const p of j.fijas || []) {
+      const k = p.f * C + p.c;
+      if (p.f < 0 || p.f >= F || p.c < 0 || p.c >= C || muro[k] || fija[k]) throw new Error('pieza fija mal puesta en ' + p.f + ',' + p.c);
+      let q;
+      if (p.tipo === 'emisor') { q = { tipo: 'emisor', color: aBits(p.color), dir: DIRS.indexOf(p.dir) }; if (q.dir < 0) throw new Error('dirección rara'); emisores.push(k); }
+      else if (p.tipo === 'diana') { q = { tipo: 'diana', color: aBits(p.color) }; dianas.push(k); }
+      else q = pieza(p.tipo + (p.color ? ':' + p.color : ''), p.ori);
+      q.fija = true;
+      fija[k] = q;
+    }
+    const libres = [];
+    for (let k = 0; k < F * C; k++) if (!muro[k] && !fija[k]) libres.push(k);
+    const inventario = {};
+    for (const [cl, n] of Object.entries(j.inventario || {})) if (n > 0) { pieza(cl, '/'); inventario[cl] = n; }
+    return { j, F, C, muro, fija, emisores, dianas, libres, inventario };
+  }
+
+  // luz (REGLAS §4): acumulado por (casilla, dirección de llegada); se propaga solo lo nuevo
+  function luz(N, colocadas, conTramos) {
+    const { F, C, muro, fija } = N, acc = new Uint8Array(F * C * 4);
+    const cola = [], tramos = conTramos ? [] : null;
+    const sale = (k, d, col) => {
+      const f = Math.floor(k / C) + DF[d], c = (k % C) + DC[d];
+      if (tramos) tramos.push([k, d, col]);
+      if (f < 0 || f >= F || c < 0 || c >= C) return;
+      cola.push(f * C + c, d, col);
+    };
+    for (const k of N.emisores) sale(k, fija[k].dir, fija[k].color);
+    for (let i = 0; i < cola.length; i += 3) {
+      const k = cola[i], d = cola[i + 1], col = cola[i + 2], x = k * 4 + d;
+      const nuevo = col & ~acc[x];
+      if (!nuevo) continue;
+      acc[x] |= nuevo;
+      if (muro[k]) continue;
+      const p = fija[k] || (colocadas && colocadas.get(k));
+      if (!p) { sale(k, d, nuevo); continue; }
+      switch (p.tipo) {
+        case 'espejo': sale(k, REFLEJO[p.ori][d], nuevo); break;
+        case 'divisor': sale(k, d, nuevo); sale(k, REFLEJO[p.ori][d], nuevo); break;
+        case 'filtro': { const y = nuevo & p.color; if (y) sale(k, d, y); break; }
+        case 'cristal': sale(k, d, p.color); break;
+        default: break; // emisor, diana, piedra: absorben
+      }
+    }
+    return { acc, tramos };
+  }
+  const recibe = (acc, k) => acc[k * 4] | acc[k * 4 + 1] | acc[k * 4 + 2] | acc[k * 4 + 3];
+
+  // ¿solución? (REGLAS §6): todas las dianas con su color exacto y todas las piezas colocadas con luz
+  function comprobar(N, colocadas) {
+    const { acc } = luz(N, colocadas);
+    const dianas = N.dianas.map((k) => ({ k, quiere: N.fija[k].color, recibe: recibe(acc, k) }));
+    const piezas = [...colocadas.keys()].map((k) => ({ k, luz: recibe(acc, k) !== 0 }));
+    const ok = dianas.every((d) => d.recibe === d.quiere) && piezas.every((p) => p.luz);
+    return { ok, dianas, piezas, acc };
+  }
+
+  // forma canónica de una colocación (REGLAS §9): «f,c,clase,ori» ordenado por f y c, unido con «;»
+  function canonica(N, colocadas) {
+    return [...colocadas.entries()].sort((a, b) => a[0] - b[0])
+      .map(([k, p]) => `${Math.floor(k / N.C)},${k % N.C},${p.clase},${p.ori || '-'}`).join(';');
+  }
+
+  return { DIRS, DF, DC, REFLEJO, aBits, aTexto, NOMBRE_COLOR, ORIENTABLE, pieza, nivel, luz, recibe, comprobar, canonica };
+});
+</script>
+<script>// Arte de «Espejos del Alba» (puzle de luz y espejos inspirado en Archaica): un templo antiguo al amanecer.
+// Mismo estilo que el arte de «Crímenes de época»: dibujo plano (sin sombras ni degradados), contorno oscuro de unas
+// 3 unidades con esquinas redondeadas y colores claros: arenisca melocotón y crema, oro y bronce, cielo malva y rosado.
+//
+// Script de navegador, sin módulos ni dependencias: define el objeto global ARTE (en Node también vale: globalThis.ARTE).
+// Cada función devuelve una CADENA SVG (solo elementos, sin la etiqueta <svg>) dibujada en una casilla de 100×100
+// (coordenadas 0..100); el juego la mete dentro de <g transform="translate(x,y)">. No usa identificadores (ni clipPath,
+// ni degradados, ni patrones), así que cualquier pieza se puede repetir en la misma página sin choques.
+//
+//   ARTE.COLORES                       { R, V, A, RV, RA, VA, RVA }: color de dibujo de cada luz
+//   ARTE.suelo(f, c)                   baldosa de arenisca del templo (a cuadros, con un grabado suave que va cambiando)
+//   ARTE.muro(f, c[, vecinos])         bloque de sillares visto un poco desde delante; vecinos (opcional): dónde hay otro
+//                                      muro al lado, 'NE' o ['N', 'E', 'SE'] o { N: true, SE: true }, para que empalmen
+//   ARTE.emisor(color, dir[, peana])   lámpara de oro con boca de trompeta hacia dir ('N','E','S','O') y lente del color;
+//                                      peana = false la dibuja sin su losa (ver «Piezas fijas», abajo)
+//   ARTE.diana(color, estado[, peana]) loto de cristal; estado 'apagada' | 'mal' | 'bien'; peana, igual que el emisor
+//   ARTE.espejo(ori, fija)             espejo de dos caras en diagonal: '/' (sube hacia la derecha) o '\\'
+//   ARTE.divisor(ori, fija)            semiespejo: lámina de cristal translúcido con vetas y marco fino de oro
+//   ARTE.filtro(color, fija)           vidriera en arco del color
+//   ARTE.cristal(color, fija)          gema tallada del color
+//   ARTE.piedra(fija)                  canto de piedra malva que tapa la luz
+//   ARTE.haz(x1, y1, x2, y2, color)    tramo de rayo en coordenadas del tablero (casillas de 100)
+//   ARTE.icono(clase)                  dibujo de la bandeja: 'espejo', 'divisor', 'piedra', 'filtro:<c>', 'cristal:<c>'
+//   ARTE.simbolo(color[, cx, cy, t])   runa para daltónicos: R triángulo, V círculo, A cuadrado (las mezclas, juntas)
+//   ARTE.peana()                       la losa con remaches de las piezas fijas, sola
+//   ARTE.NOMBRES, ARTE.TONOS, ARTE.PALETA   nombres de las luces, tonos de cristal de cada luz y colores de la página
+//
+// Piezas fijas: ARTE.x(..., true) es exactamente ARTE.peana() + ARTE.x(..., false). Si el juego quiere que los haces se
+// vean pasar por encima de la peana hasta la pieza, dibuja en este orden: suelo y peanas → haces → muros y piezas sin
+// peana (emisor y diana con el tercer argumento a false). Si no, basta con suelo → haces → muros y piezas.
+(function (raiz) {
+  'use strict';
+  const T = '#2c2531';   // tinta: el contorno de todo
+
+  // ---------- colores ----------
+  const K = {
+    // suelo de arenisca
+    crema: '#faecd9', melo: '#f6dcc4', junta: '#e9c6a6', grabadoCrema: '#efd8bd', grabadoMelo: '#ebc9aa',
+    // muro: sillares de arenisca más tostada
+    muroCara: '#f0c8ab', muroFrente: '#dea183', muroJunta: '#c78a6c', muroJuntaCara: '#ddb092', muroRelieve: '#d9a184',
+    // peana de las piezas fijas: granito rosado (como el de Asuán), para que no se confunda con el suelo ni con los muros
+    peana: '#ecdce6', peanaLinea: '#d6c0d0',
+    oro: '#f4c752', oroOsc: '#d9a636',
+    bronce: '#e2a466', bronceOsc: '#bf7f47',
+    plata: '#e3edf8',
+    vidrio: '#cfeef3',
+    piedra: '#cfc4d6', piedraOsc: '#a495b2',
+    badge: '#5d4b66',
+  };
+  // luces: saturadas pero amables sobre fondo claro
+  const COLORES = { R: '#e8473f', V: '#2fae55', A: '#3d7be0', RV: '#f2b51b', RA: '#d244b5', VA: '#1aaec6', RVA: '#fffaf0' };
+  const NOMBRES = { R: 'rojo', V: 'verde', A: 'azul', RV: 'amarillo', RA: 'magenta', VA: 'cian', RVA: 'blanco' };
+  // colores de la página del juego (claros, a juego con el arte)
+  const PALETA = { papel: '#efe6f1', papel2: '#f8f0f6', marco: '#fbf3e6', marcoLinea: '#d9b99b', tinta: T, tinta2: '#5a4a5e', acento: '#d9a636', acento2: '#bf7f47', rosa: '#f3c3c0', malva: '#d9c4e3' };
+
+  // ---------- ayudantes ----------
+  const r1 = (v) => Math.round(v * 10) / 10;
+  const hex = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+  const aHex = (v) => '#' + v.map((x) => Math.max(0, Math.min(255, Math.round(x))).toString(16).padStart(2, '0')).join('');
+  const mezcla = (a, b, t) => { const A = hex(a), B = hex(b); return aHex(A.map((x, i) => x + (B[i] - x) * t)); };
+  // figura rellena con el contorno oscuro
+  const fig = (d, relleno, grosor = 3, extra = '') => `<path d="${d}" fill="${relleno}" stroke="${T}" stroke-width="${grosor}" stroke-linejoin="round"${extra}/>`;
+  // línea suelta, sin relleno
+  const raya = (d, color, grosor = 2.4, extra = '') => `<path d="${d}" fill="none" stroke="${color}" stroke-width="${grosor}" stroke-linecap="round" stroke-linejoin="round"${extra}/>`;
+  const circ = (x, y, r, relleno, grosor = 3, extra = '') => `<circle cx="${r1(x)}" cy="${r1(y)}" r="${r1(r)}" fill="${relleno}" stroke="${T}" stroke-width="${grosor}"${extra}/>`;
+  const rad = (g) => (g * Math.PI) / 180;
+  // punto a distancia r y ángulo g (grados; 0 = derecha, 90 = abajo) del centro
+  const polar = (r, g, cx = 50, cy = 50) => [cx + r * Math.cos(rad(g)), cy + r * Math.sin(rad(g))];
+  const xy = (p) => r1(p[0]) + ' ' + r1(p[1]);
+  // estrellita de cuatro puntas (destello)
+  const destello = (x, y, R, color = '#ffffff', g = 1.3) => {
+    const r = R * 0.3;
+    return `<path d="M${r1(x)} ${r1(y - R)}Q${r1(x + r)} ${r1(y - r)} ${r1(x + R)} ${r1(y)}Q${r1(x + r)} ${r1(y + r)} ${r1(x)} ${r1(y + R)}Q${r1(x - r)} ${r1(y + r)} ${r1(x - R)} ${r1(y)}Q${r1(x - r)} ${r1(y - r)} ${r1(x)} ${r1(y - R)}Z" fill="${color}" stroke="${T}" stroke-width="${g}" stroke-linejoin="round"/>`;
+  };
+  // tonos de cada luz para los cristales: vivo, medio, claro, pálido (sin luz) y oscuro
+  const TONOS = {};
+  for (const k of Object.keys(COLORES)) {
+    const c = COLORES[k];
+    TONOS[k] = k === 'RVA'
+      ? { vivo: '#fffaf0', medio: '#f6efe2', claro: '#fffdf8', palido: '#ece7ee', osc: '#d8ccb6' }
+      : { vivo: c, medio: mezcla(c, '#ffffff', 0.3), claro: mezcla(c, '#ffffff', 0.55), palido: mezcla(c, '#efe9ef', 0.6), osc: mezcla(c, T, 0.25) };
+  }
+  const tono = (color) => TONOS[color] || TONOS.RVA;
+
+  // ---------- runa de cada luz (para no depender solo del color) ----------
+  // R = triángulo (fuego), V = círculo (semilla), A = cuadrado (sillar); las mezclas juntan sus marcas en el orden R, V, A:
+  // dos en fila y las tres en triángulo (R arriba). Va sobre una cartela crema (cartucho) para leerse sobre cualquier color.
+  const POS = { 1: [[0, 0]], 2: [[-0.62, 0.03], [0.62, 0.03]], 3: [[0, -0.5], [-0.6, 0.5], [0.6, 0.5]] };
+  function marca(l, x, y, t, relleno, g) {
+    if (l === 'R') return `<path d="M${r1(x)} ${r1(y - 0.56 * t)}L${r1(x + 0.56 * t)} ${r1(y + 0.42 * t)}H${r1(x - 0.56 * t)}Z" fill="${relleno}" stroke="${T}" stroke-width="${g}" stroke-linejoin="round"/>`;
+    if (l === 'V') return `<circle cx="${r1(x)}" cy="${r1(y)}" r="${r1(0.44 * t)}" fill="${relleno}" stroke="${T}" stroke-width="${g}"/>`;
+    return `<rect x="${r1(x - 0.39 * t)}" y="${r1(y - 0.39 * t)}" width="${r1(0.78 * t)}" height="${r1(0.78 * t)}" rx="${r1(0.08 * t)}" fill="${relleno}" stroke="${T}" stroke-width="${g}" stroke-linejoin="round"/>`;
+  }
+  // t: tamaño de cada marca; modo 'color' (cada marca con su luz) o 'blanco'; fondo: la cartela crema
+  function runa(color, cx, cy, t, modo = 'color', fondo = true) {
+    const letras = [...String(color)].filter((l) => 'RVA'.includes(l)), n = letras.length;
+    if (!n) return '';
+    const g = r1(Math.max(1, t * 0.15));
+    let s = '';
+    if (fondo) {
+      if (n === 3) s += circ(cx, cy + 0.02 * t, 1.38 * t, '#fffaf0', g);
+      else {
+        const w = n === 1 ? 1.95 * t : 3.15 * t, h = 1.62 * t;
+        s += `<rect x="${r1(cx - w / 2)}" y="${r1(cy - h / 2)}" width="${r1(w)}" height="${r1(h)}" rx="${r1(h / 2)}" fill="#fffaf0" stroke="${T}" stroke-width="${g}"/>`;
+      }
+    }
+    letras.forEach((l, i) => {
+      const [dx, dy] = POS[n][i];
+      s += marca(l, cx + dx * t, cy + dy * t, t, modo === 'blanco' ? '#ffffff' : COLORES[l], g);
+    });
+    return s;
+  }
+  const simbolo = (color, cx = 50, cy = 50, t = 24) => runa(color, cx, cy, t, 'color', true);
+
+  // ---------- suelo ----------
+  // baldosas a cuadros (crema y melocotón) con una junta fina; en las crema, un grabado suave que va cambiando
+  const GRABADOS = [
+    // disco solar con rayos
+    (c) => `<circle cx="50" cy="50" r="8" fill="none" stroke="${c}" stroke-width="2.4"/>` +
+      raya([0, 45, 90, 135, 180, 225, 270, 315].map((g) => `M${xy(polar(12, g))}L${xy(polar(17, g))}`).join(''), c, 2.4),
+    // loto de tres pétalos
+    (c) => raya('M50 62C44 54 44 44 50 36C56 44 56 54 50 62ZM48 62C40 62 33 56 31 47C38 47 45 52 48 60M52 62C60 62 67 56 69 47C62 47 55 52 52 60', c, 2.2),
+    // rombo con cuatro puntos
+    (c) => raya('M50 38L62 50L50 62L38 50Z', c, 2.4) + [[50, 30], [70, 50], [50, 70], [30, 50]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="2.2" fill="${c}"/>`).join(''),
+    // ojo solar
+    (c) => raya('M34 50Q50 36 66 50Q50 64 34 50Z', c, 2.2) + `<circle cx="50" cy="50" r="4" fill="${c}"/>`,
+  ];
+  function suelo(f, c) {
+    const par = (f + c) % 2 === 0, base = par ? K.crema : K.melo, grab = par ? K.grabadoCrema : K.grabadoMelo;
+    let s = `<rect width="100" height="100" fill="${base}"/>`;
+    s += `<rect x="1" y="1" width="98" height="98" rx="2" fill="none" stroke="${K.junta}" stroke-width="2"/>`;
+    const h = (f * 7 + c * 5 + ((f * c) % 3)) % 8;
+    if (par) s += GRABADOS[h % 4](grab);
+    else if (h === 1 || h === 6) s += `<path d="M84 12l4 3l-2 4" fill="none" stroke="${grab}" stroke-width="2" stroke-linecap="round"/>`;   // desconchón
+    return s;
+  }
+
+  // ---------- muro ----------
+  // bloque alto de sillares de arenisca, visto un poco desde delante: la cara de arriba (hiladas a matajunta) y, si no
+  // hay otro muro debajo, el frente, más tostado. Ocupa la casilla entera y el contorno va sobre su borde, así que hay
+  // que pintar antes el suelo de todas las casillas. Con vecinos, los bloques empalman sin contorno entre ellos:
+  //   vecinos = 'NE' (lados) o ['N', 'E', 'SE'] / { N: true, SE: true } (también las diagonales SE y SO, que cierran el
+  //   frente cuando el muro de al lado baja: sin ellas también vale, solo queda sin cerrar esa esquina).
+  const lados = (v) => {
+    if (!v) return {};
+    const l = typeof v === 'string' ? [...v] : Array.isArray(v) ? v : Object.keys(v).filter((k) => v[k]);
+    const r = {};
+    for (const k of l) r[k] = true;
+    return r;
+  };
+  function muro(f, c, vecinos) {
+    const L = lados(vecinos), R = 7, yF = 68;
+    const tl = !L.N && !L.O, tr = !L.N && !L.E, br = !L.S && !L.E, bl = !L.S && !L.O;
+    // silueta (con esquinas redondas solo donde se juntan dos lados libres)
+    const sil = `M${tl ? R : 0} 0H${100 - (tr ? R : 0)}` + (tr ? `A${R} ${R} 0 0 1 100 ${R}` : '') +
+      `V${100 - (br ? R : 0)}` + (br ? `A${R} ${R} 0 0 1 ${100 - R} 100` : '') +
+      `H${bl ? R : 0}` + (bl ? `A${R} ${R} 0 0 1 0 ${100 - R}` : '') +
+      `V${tl ? R : 0}` + (tl ? `A${R} ${R} 0 0 1 ${R} 0` : '') + 'Z';
+    let s = `<path d="${sil}" fill="${K.muroCara}"/>`;
+    // cara de arriba: hiladas de 25 a matajunta (casan con las de los muros vecinos)
+    const fondo = L.S ? 100 : yF;
+    let j = L.N ? 'M0 1H100' : '';
+    for (let i = 0; i * 25 < fondo; i++) {
+      const a = i * 25, b = Math.min(fondo, a + 25);
+      if (a > 0) j += `M0 ${a}H100`;
+      for (const x of (i % 2 ? [25, 75] : (L.O ? [1, 50] : [50]))) j += `M${x} ${a}V${b}`;
+    }
+    s += `<path d="${j}" stroke="${K.muroJuntaCara}" stroke-width="2.2" fill="none"/>`;
+    // algún picado del cincel, distinto en cada bloque, y en uno de cada tres un disco solar alado tallado en el sillar
+    // grande del centro (el de los dinteles de los templos)
+    const h = (f * 3 + c * 7) % 6;
+    s += raya(['M12 13l4 3M62 38l5 2', 'M34 12l4 3M84 62l-4 2', 'M8 36l5 2M60 11l4 3', 'M38 60l5 -2M86 36l-4 3', 'M14 60l4 -3M64 13l5 2', 'M86 12l-4 3M12 38l5 1'][h], K.muroJuntaCara, 2);
+    if (h % 3 === 0 && fondo > 50) {
+      s += `<circle cx="50" cy="37.5" r="4.6" fill="none" stroke="${K.muroRelieve}" stroke-width="2.2"/>`;
+      s += raya('M44 36.5C40 33.5 34 33 29 35C33 38 39 39.5 44 39M56 36.5C60 33.5 66 33 71 35C67 38 61 39.5 56 39', K.muroRelieve, 2);
+    }
+    // frente (si no hay muro debajo): dos hiladas, y su arista de arriba
+    if (!L.S) {
+      const df = `M0 ${yF}H100V${100 - (br ? R : 0)}` + (br ? `A${R} ${R} 0 0 1 ${100 - R} 100` : '') +
+        `H${bl ? R : 0}` + (bl ? `A${R} ${R} 0 0 1 0 ${100 - R}` : '') + 'Z';
+      s += `<path d="${df}" fill="${K.muroFrente}"/>`;
+      s += `<path d="M0 84H100M25 ${yF}V84M75 ${yF}V84M50 84V100${L.O ? 'M1 84V100' : ''}" stroke="${K.muroJunta}" stroke-width="2.2" fill="none"/>`;
+      let arista = `M0 ${yF}H100`;
+      // si el muro de al lado baja (diagonal de abajo con muro), su cara de arriba sigue: se cierra aquí el frente
+      if (L.E && L.SE) arista += `M98.7 ${yF}V100`;
+      if (L.O && L.SO) arista += `M1.3 ${yF}V100`;
+      s += `<path d="${arista}" stroke="${T}" stroke-width="2.6" fill="none" stroke-linecap="square"/>`;
+    }
+    // contorno solo por los lados libres (se recorre la silueta y por los lados con vecino se salta con M)
+    let o = `M${tl ? R : 0} 0` + (L.N ? 'M' : 'L') + `${100 - (tr ? R : 0)} 0`;
+    if (tr) o += `A${R} ${R} 0 0 1 100 ${R}`;
+    o += (L.E ? 'M' : 'L') + `100 ${100 - (br ? R : 0)}`;
+    if (br) o += `A${R} ${R} 0 0 1 ${100 - R} 100`;
+    o += (L.S ? 'M' : 'L') + `${bl ? R : 0} 100`;
+    if (bl) o += `A${R} ${R} 0 0 1 0 ${100 - R}`;
+    o += (L.O ? 'M' : 'L') + `0 ${tl ? R : 0}`;
+    if (tl) o += `A${R} ${R} 0 0 1 ${R} 0`;
+    s += `<path d="${o}" fill="none" stroke="${T}" stroke-width="3" stroke-linejoin="round" stroke-linecap="square"/>`;
+    return s;
+  }
+
+  // ---------- peana de las piezas fijas: losa de granito rosado con cuatro remaches de bronce ----------
+  function peana() {
+    let s = `<rect x="7" y="7" width="86" height="86" rx="12" fill="${K.peana}" stroke="${T}" stroke-width="2.6"/>`;
+    s += `<rect x="12.5" y="12.5" width="75" height="75" rx="8" fill="none" stroke="${K.peanaLinea}" stroke-width="1.8"/>`;
+    for (const [x, y] of [[17, 17], [83, 17], [17, 83], [83, 83]]) s += circ(x, y, 3.4, K.bronce, 1.6);
+    return s;
+  }
+
+  // ---------- emisor: lámpara de oro con un cristal de su luz y una boca de trompeta que llega al borde ----------
+  const ANG = { N: -90, E: 0, S: 90, O: 180 };
+  function emisor(color, dir, conPeana = true) {
+    const t = tono(color), a = ANG[dir] !== undefined ? ANG[dir] : 0;
+    // dibujada hacia el este y girada: cuello, aro de oro, campana y la lente del color en el borde de la casilla
+    let g = fig('M58 42H77L91.5 33.5V66.5L77 58H58Z', K.bronce, 3);
+    g += raya('M81 42.5L88 39M81 57.5L88 61', K.bronceOsc, 2);
+    g += fig('M70 39.5H77V60.5H70Z', K.oro, 2.2);
+    g += fig('M91 31.6Q107 50 91 68.4Q86.4 50 91 31.6Z', t.vivo, 2.4);
+    g += raya('M93.6 38.5Q96.6 43.5 97 47.5', '#ffffff', 2);
+    let s = conPeana === false ? '' : peana();
+    s += `<g transform="rotate(${a} 50 50)">${g}</g>`;
+    // cuerpo de la lámpara
+    s += circ(50, 50, 23, K.oro, 3);
+    s += `<circle cx="50" cy="50" r="18" fill="none" stroke="${K.oroOsc}" stroke-width="2.2" stroke-dasharray="3 3.3"/>`;
+    s += circ(50, 50, 15, t.vivo, 2.6);
+    s += `<path d="M40.6 45A10.4 10.4 0 0 1 46.4 39.6" fill="none" stroke="#ffffff" stroke-width="2.4" stroke-linecap="round"/>`;
+    s += runa(color, 50, 51, 8.4, 'blanco', false);
+    return s;
+  }
+
+  // ---------- diana: loto de cristal sobre su peana ----------
+  // apagada: pétalos pálidos del color que pide; mal (le llega luz, pero no la suya): un cerco a trazos y una chapa con un
+  // aspa en la esquina; bien: pétalos vivos, aura, rayitos de luz y destellos. El color pedido se lee siempre (pétalos y runa).
+  function petalo(r0, r1_, w, g, relleno, grosor) {
+    const L = r1_ - r0;
+    const p = `M50 ${r1(50 - r0)}C${r1(50 - w)} ${r1(50 - r0 - L * 0.3)} ${r1(50 - w * 0.7)} ${r1(50 - r1_ + L * 0.22)} 50 ${r1(50 - r1_)}C${r1(50 + w * 0.7)} ${r1(50 - r1_ + L * 0.22)} ${r1(50 + w)} ${r1(50 - r0 - L * 0.3)} 50 ${r1(50 - r0)}Z`;
+    return `<path d="${p}" transform="rotate(${g} 50 50)" fill="${relleno}" stroke="${T}" stroke-width="${grosor}" stroke-linejoin="round"/>`;
+  }
+  function diana(color, estado, conPeana = true) {
+    const t = tono(color), bien = estado === 'bien', mal = estado === 'mal', blanco = color === 'RVA';
+    let s = conPeana === false ? '' : peana();
+    if (bien) {
+      s += `<circle cx="50" cy="50" r="41" fill="${blanco ? '#ffffff' : t.vivo}" fill-opacity="${blanco ? 0.9 : 0.3}"/>`;
+      for (let k = 0; k < 8; k++) {
+        const g = 22.5 + k * 45, d = `M${xy(polar(37.5, g))}L${xy(polar(45.5, g))}`;
+        s += `<path d="${d}" stroke="${T}" stroke-width="6.6" stroke-linecap="round"/><path d="${d}" stroke="${blanco ? '#ffffff' : t.vivo}" stroke-width="3.6" stroke-linecap="round"/>`;
+      }
+    }
+    if (mal) s += `<circle cx="50" cy="50" r="39.5" fill="none" stroke="${K.piedraOsc}" stroke-width="2.2" stroke-dasharray="4 5" stroke-linecap="round"/>`;
+    const fuera = bien ? t.vivo : t.claro;
+    const dentro = bien ? t.claro : (blanco ? '#ffffff' : mezcla(t.claro, '#ffffff', 0.45));
+    for (let k = 0; k < 8; k++) s += petalo(6, bien ? 36 : 33, 11, k * 45, fuera, 2.4);
+    for (let k = 0; k < 8; k++) s += petalo(4, bien ? 25 : 23, 8.5, 22.5 + k * 45, dentro, 2);
+    s += circ(50, 50, 13, bien ? '#fffdf4' : (mal ? '#ffffff' : t.palido), 2.4);
+    s += runa(color, 50, 50.6, 7.8, 'color', false);
+    if (bien) s += destello(21, 25, 6, '#ffffff') + destello(79, 75, 5, '#ffffff');
+    if (mal) s += circ(82, 82, 9, K.badge, 2) + raya('M78.3 78.3L85.7 85.7M85.7 78.3L78.3 85.7', '#ffffff', 2.8);
+    return s;
+  }
+
+  // ---------- espejo: losa diagonal de plata con marco de bronce ----------
+  // '/' va de la esquina de abajo a la izquierda a la de arriba a la derecha (giro de -45°); '\' al revés. Pasa por el centro.
+  const GIRO = (ori) => (ori === '/' ? -45 : 45);
+  const LARGO = 78;   // cabe en la peana sin tapar los remaches
+  function espejo(ori, fija) {
+    const x0 = 50 - LARGO / 2, x1 = 50 + LARGO / 2;
+    let g = `<rect x="${x0}" y="40.5" width="${LARGO}" height="19" rx="5" fill="${K.bronce}" stroke="${T}" stroke-width="3"/>`;
+    g += `<rect x="${x0 + 8}" y="45" width="${LARGO - 16}" height="10" rx="2" fill="${K.plata}" stroke="${T}" stroke-width="1.6"/>`;
+    g += raya(`M${x0 + 16} 46.6L${x0 + 21} 53.4M${x0 + 23} 46.6L${x0 + 26} 50.6M${x1 - 26} 46.6L${x1 - 21} 53.4`, '#ffffff', 2.4);
+    g += `<circle cx="${x0 + 4}" cy="50" r="1.9" fill="${K.bronceOsc}"/><circle cx="${x1 - 4}" cy="50" r="1.9" fill="${K.bronceOsc}"/>`;
+    return (fija ? peana() : '') + `<g transform="rotate(${GIRO(ori)} 50 50)">${g}</g>`;
+  }
+
+  // ---------- divisor: lámina de cristal translúcido (se ve el rayo que sigue recto) con vetas y marco fino de oro ----------
+  function divisor(ori, fija) {
+    const x0 = 50 - LARGO / 2;
+    let g = `<rect x="${x0}" y="43" width="${LARGO}" height="14" rx="4" fill="${K.vidrio}" fill-opacity=".45" stroke="${T}" stroke-width="2.4"/>`;
+    g += `<rect x="${x0 + 2.6}" y="45.6" width="${LARGO - 5.2}" height="8.8" rx="2.2" fill="none" stroke="${K.oro}" stroke-width="2"/>`;
+    for (let x = x0 + 9; x < x0 + LARGO - 10; x += 8) g += `<path d="M${x} 53.4L${x + 4.6} 46.6" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round"/>`;
+    return (fija ? peana() : '') + `<g transform="rotate(${GIRO(ori)} 50 50)">${g}</g>`;
+  }
+
+  // ---------- filtro: vidriera en arco con plomos y paños de su color ----------
+  function filtro(color, fija) {
+    const t = tono(color), a = t.medio, b = t.claro;
+    let g = fig('M24 83V41A26 26 0 0 1 76 41V83Z', K.oro, 3);
+    // seis paños a cuadros de dos tonos
+    g += `<path d="M30 41A20 20 0 0 1 50 21V41Z" fill="${a}"/><path d="M50 21A20 20 0 0 1 70 41H50Z" fill="${b}"/>`;
+    g += `<path d="M30 41H50V60H30Z" fill="${b}"/><path d="M50 41H70V60H50Z" fill="${a}"/>`;
+    g += `<path d="M30 60H50V78H30Z" fill="${a}"/><path d="M50 60H70V78H50Z" fill="${b}"/>`;
+    g += `<path d="M30 78V41A20 20 0 0 1 70 41V78Z" fill="none" stroke="${T}" stroke-width="2.4" stroke-linejoin="round"/>`;
+    g += `<path d="M50 21V78M30 41H70M30 60H70" stroke="${T}" stroke-width="2.2"/>`;
+    g += raya('M34 36l5 -5M34 74l5 -5M55 74l5 -5M60 34l4 -4', '#ffffff', 1.8);
+    // clave del arco y repisa
+    g += fig('M44.5 11.5H55.5L53.6 19.5H46.4Z', K.bronce, 2.2);
+    g += `<rect x="20" y="81.5" width="60" height="8" rx="3" fill="${K.bronce}" stroke="${T}" stroke-width="2.6"/>`;
+    g += runa(color, 50, 50.5, 7.6, 'color', true);
+    return (fija ? peana() : '') + g;
+  }
+
+  // ---------- cristal tintado: gema tallada del color, como una joya ----------
+  function cristal(color, fija) {
+    const t = tono(color);
+    // mesa y = 24, filetín y = 40, culata (50, 79)
+    const caras = [
+      ['M21 40L36 24L35 40Z', t.claro], ['M36 24L35 40H50Z', t.medio], ['M36 24H64L50 40Z', t.claro],
+      ['M64 24L50 40H65Z', t.medio], ['M64 24L65 40H79Z', t.vivo],
+      ['M21 40H35L50 79Z', t.medio], ['M35 40H50V79Z', t.vivo], ['M50 40H65L50 79Z', t.claro], ['M65 40H79L50 79Z', t.vivo],
+    ];
+    let g = '';
+    for (const [d, c] of caras) g += `<path d="${d}" fill="${c}"/>`;
+    g += `<path d="M21 40H79M36 24L35 40L50 79L65 40L64 24M36 24L50 40L64 24M35 40L50 40" fill="none" stroke="${T}" stroke-width="1.8" stroke-linejoin="round"/>`;
+    g += fig('M36 24H64L79 40L50 79L21 40Z', 'none', 3);
+    g += raya('M27 37.5l6 -6.5M40 29h7', '#ffffff', 2.2);
+    g += runa(color, 50, 52.5, 7.2, 'color', true);
+    return (fija ? peana() : '') + g;
+  }
+
+  // ---------- piedra: canto redondeado de piedra malva, moteado y con un par de grietas ----------
+  function piedra(fija) {
+    let g = fig('M24 72C19 59 23 42 35 34C47 26 65 27 74 36C83 45 84 61 77 71C71 80 59 82 48 81.5C37 81 28 79 24 72Z', K.piedra, 3);
+    g += raya('M44 41l6 7l-3 6M65 57l7 3M33 62l6 -2', K.piedraOsc, 2.3);
+    for (const [x, y, r] of [[38, 50, 1.6], [58, 41, 1.4], [61, 69, 1.7], [48, 65, 1.3], [69, 47, 1.3], [31, 57, 1.1], [54, 75, 1.2]]) {
+      g += `<circle cx="${x}" cy="${y}" r="${r}" fill="${K.piedraOsc}"/>`;
+    }
+    return (fija ? peana() : '') + g;
+  }
+
+  // ---------- haz: núcleo fino brillante y halo suave del color ----------
+  // En coordenadas del tablero (casillas de 100). Halo en dos capas semitransparentes, núcleo del color y, en medio, una
+  // línea fina más clara. Los remates son planos, así que los tramos seguidos empalman sin costuras (ni bultos en el
+  // halo). El blanco es una cinta blanca con un filo malva tenue, para que se vea sobre el suelo claro.
+  const CENTRO = {};
+  for (const k of Object.keys(COLORES)) CENTRO[k] = mezcla(COLORES[k], '#ffffff', 0.55);
+  function haz(x1, y1, x2, y2, color) {
+    const L = `x1="${r1(x1)}" y1="${r1(y1)}" x2="${r1(x2)}" y2="${r1(y2)}"`;
+    if (color === 'RVA') {
+      return `<line ${L} stroke="#cdb9d6" stroke-width="19" stroke-opacity=".75"/>` +
+        `<line ${L} stroke="#ffffff" stroke-width="14.6"/>` +
+        `<line ${L} stroke="#fff6e2" stroke-width="4.2"/>`;
+    }
+    const c = COLORES[color] || color;
+    return `<line ${L} stroke="${c}" stroke-width="20" stroke-opacity=".2"/>` +
+      `<line ${L} stroke="${c}" stroke-width="10" stroke-opacity=".3"/>` +
+      `<line ${L} stroke="${c}" stroke-width="5"/>` +
+      `<line ${L} stroke="${CENTRO[color] || (/^#[0-9a-f]{6}$/i.test(c) ? mezcla(c, '#ffffff', 0.55) : '#ffffff')}" stroke-width="1.6"/>`;
+  }
+
+  // ---------- iconos de la bandeja (las mismas piezas, sin peana) ----------
+  function icono(clase) {
+    const [tipo, col] = String(clase).split(':');
+    if (tipo === 'espejo') return espejo('/', false);
+    if (tipo === 'divisor') return divisor('/', false);
+    if (tipo === 'piedra') return piedra(false);
+    if (tipo === 'filtro') return filtro(col || 'RVA', false);
+    if (tipo === 'cristal') return cristal(col || 'RVA', false);
+    return '';
+  }
+
+  raiz.ARTE = {
+    COLORES, NOMBRES, TONOS, PALETA,
+    suelo, muro, peana, emisor, diana, espejo, divisor, filtro, cristal, piedra, haz, icono, simbolo,
+  };
+})(typeof window !== 'undefined' ? window : globalThis);
+</script>
+<script>window.NIVELES = [{"id":"n01","nombre":"Primer rayo","entradilla":"El sol asoma por la grieta del muro y un solo rayo cruza el atrio. Llévalo al altar.","escalon":"Fácil","F":5,"C":5,"tablero":[".#...","..#..",".....",".....","....."],"fijas":[{"tipo":"emisor","f":2,"c":0,"color":"R","dir":"E"},{"tipo":"diana","f":0,"c":0,"color":"R"}],"inventario":{"espejo":3},"s":"=8CLvpWZwNXZsEDLysDXs8malB3clxSMsEzOcxybqVGczVGLwwSM"},{"id":"n02","nombre":"El umbral","entradilla":"La luz quiere entrar al templo, pero la puerta no está donde mira el rayo.","escalon":"Fácil","F":5,"C":5,"tablero":[".#...","#....","..#..","..#..","....."],"fijas":[{"tipo":"emisor","f":4,"c":3,"color":"A","dir":"N"},{"tipo":"diana","f":2,"c":0,"color":"A"}],"inventario":{"espejo":3},"s":"=8CLvpWZwNXZsEDLysDXs8malB3clxyMsEzOvwybqVGczVGLxwSM"},{"id":"n03","nombre":"Espejo de agua","entradilla":"Tres reflejos y la mañana se enciende. Nada sobra, nada falta.","escalon":"Fácil","F":5,"C":5,"tablero":[".....","....#","...#.",".#...","....."],"fijas":[{"tipo":"emisor","f":0,"c":3,"color":"V","dir":"S"},{"tipo":"diana","f":3,"c":4,"color":"V"}],"inventario":{"espejo":3},"s":"=wFLvpWZwNXZsIDLzszLs8malB3clxyMsEzOvwybqVGczVGLywSM"},{"id":"n04","nombre":"Hacia poniente","entradilla":"El rayo nace mirando al oeste. Tres espejos lo devuelven al altar.","escalon":"Fácil","F":5,"C":5,"tablero":[".....","..#..",".#...",".....","...#."],"fijas":[{"tipo":"emisor","f":1,"c":4,"color":"R","dir":"O"},{"tipo":"diana","f":4,"c":1,"color":"R"}],"inventario":{"espejo":3},"s":"=8CLvpWZwNXZsMDLzszLs8malB3clxSMsMzOvwybqVGczVGLzwSM"},{"id":"n05","nombre":"La grieta","entradilla":"Por la grieta entra un rayo verde, y dos altares lo esperan.","escalon":"Medio","F":6,"C":6,"tablero":["......","......",".#....","...#..","......","......"],"fijas":[{"tipo":"emisor","f":3,"c":0,"color":"V","dir":"E"},{"tipo":"diana","f":2,"c":5,"color":"V"},{"tipo":"diana","f":0,"c":1,"color":"V"}],"inventario":{"espejo":2,"divisor":1},"s":"vwybqVGczVGLywyM78CLy92cpZXakxiMsIzOcxybqVGczVGLywCM"},{"id":"n06","nombre":"La luz se parte","entradilla":"Un solo rayo y dos altares: aprende a repartir el alba.","escalon":"Medio","F":6,"C":6,"tablero":["......","......","...#..","......","......","....#."],"fijas":[{"tipo":"emisor","f":2,"c":5,"color":"A","dir":"O"},{"tipo":"diana","f":5,"c":3,"color":"A"},{"tipo":"diana","f":3,"c":2,"color":"A"}],"inventario":{"espejo":2,"divisor":1},"s":"vwybqVGczVGL0wyM78CLy92cpZXakxyMsMzOvwybqVGczVGL0wiM"},{"id":"n07","nombre":"Las dos naves","entradilla":"La luz recorre el templo de nave en nave. Cada giro cuenta.","escalon":"Medio","F":6,"C":6,"tablero":["......","......",".#..##","......","#.....","......"],"fijas":[{"tipo":"emisor","f":0,"c":1,"color":"R","dir":"S"},{"tipo":"emisor","f":0,"c":2,"color":"A","dir":"S"},{"tipo":"diana","f":5,"c":0,"color":"R"},{"tipo":"diana","f":1,"c":5,"color":"A"},{"tipo":"diana","f":0,"c":3,"color":"A"}],"inventario":{"divisor":3,"espejo":1},"s":"vwicvNXa2lGZsIDL1szLsI3bzlmdpRGLzwSM7wFLvpWZwNXZsIDLxsDXsI3bzlmdpRGLxwSM"},{"id":"n08","nombre":"Sombra de columna","entradilla":"Las columnas deciden por dónde pasa el amanecer. Tú decides dónde lo esperas.","escalon":"Medio","F":6,"C":6,"tablero":["......","......",".#....","......","..#...","......"],"fijas":[{"tipo":"emisor","f":0,"c":2,"color":"R","dir":"S"},{"tipo":"diana","f":4,"c":1,"color":"R"},{"tipo":"diana","f":0,"c":0,"color":"R"}],"inventario":{"espejo":2,"divisor":1},"s":"vwybqVGczVGLywyM78CLy92cpZXakxSMsMzOcxybqVGczVGLwwyM"},{"id":"n09","nombre":"Falso amanecer","entradilla":"El rojo y el azul tienen que llegar juntos al mismo altar, y ni un rayo de más.","escalon":"Difícil","F":7,"C":7,"tablero":[".......",".......","..#....","..#....",".......",".......","......."],"fijas":[{"tipo":"emisor","f":4,"c":0,"color":"R","dir":"E"},{"tipo":"emisor","f":1,"c":0,"color":"A","dir":"E"},{"tipo":"diana","f":3,"c":0,"color":"RA"}],"inventario":{"espejo":5},"s":"==wLs8malB3clxSMsQzOcxybqVGczVGLxwyM78CLvpWZwNXZsEDLyszLs8malB3clxCMsIzOcxybqVGczVGLxwSM"},{"id":"n10","nombre":"El alba se mezcla","entradilla":"Dos luces tienen que encontrarse en el mismo altar, y ni una más.","escalon":"Difícil","F":7,"C":7,"tablero":["...#...",".......","....#..",".......",".....#.",".......","......."],"fijas":[{"tipo":"emisor","f":2,"c":6,"color":"V","dir":"O"},{"tipo":"emisor","f":6,"c":2,"color":"R","dir":"N"},{"tipo":"divisor","f":1,"c":2,"ori":"\\"},{"tipo":"piedra","f":3,"c":4},{"tipo":"diana","f":5,"c":2,"color":"RV"},{"tipo":"diana","f":6,"c":3,"color":"V"}],"inventario":{"divisor":1,"espejo":3},"s":"==wLsI3bzlmdpRGLzwSN7wFLvpWZwNXZsUDLysDXs8malB3clxSNsEzOvwybqVGczVGLzwSM"},{"id":"n11","nombre":"Mosaico","entradilla":"Varios rayos, varios giros: cada pieza en su sitio o el mosaico no se enciende.","escalon":"Difícil","F":7,"C":7,"tablero":[".......",".#.....","...#...","..#....",".......",".......","......."],"fijas":[{"tipo":"emisor","f":5,"c":0,"color":"A","dir":"E"},{"tipo":"emisor","f":0,"c":3,"color":"V","dir":"S"},{"tipo":"diana","f":4,"c":1,"color":"VA"},{"tipo":"diana","f":2,"c":0,"color":"V"}],"inventario":{"espejo":4,"divisor":1},"s":"=8CLvpWZwNXZsEDL1szLs8malB3clxiMsIzOvwicvNXa2lGZsEDLyszLs8malB3clxyMsEzOvwybqVGczVGLywSM"},{"id":"n12","nombre":"La hora violeta","entradilla":"Dos divisores y tres altares: cada luz, a su sitio.","escalon":"Difícil","F":7,"C":7,"tablero":["...#..#","#......","#......","#..#...","##..##.","##.....","..#...."],"fijas":[{"tipo":"emisor","f":0,"c":4,"color":"V","dir":"S"},{"tipo":"emisor","f":6,"c":3,"color":"R","dir":"N"},{"tipo":"piedra","f":2,"c":4},{"tipo":"diana","f":5,"c":2,"color":"RV"},{"tipo":"diana","f":1,"c":1,"color":"V"},{"tipo":"diana","f":5,"c":6,"color":"V"}],"inventario":{"divisor":2,"espejo":3},"s":"cxybqVGczVGLzwSN7wFLvpWZwNXZsMDL0sDXsI3bzlmdpRGLywCN78CLvpWZwNXZsQDLxszLsI3bzlmdpRGLywSM"},{"id":"n13","nombre":"El velo","entradilla":"Un velo de color sobre la luz: lo que pasa a través cuenta, lo que no, se pierde.","escalon":"Experto","F":7,"C":7,"tablero":[".......","..#...#","..#.##.",".......",".......",".......","......."],"fijas":[{"tipo":"emisor","f":3,"c":0,"color":"V","dir":"E"},{"tipo":"emisor","f":0,"c":1,"color":"RVA","dir":"S"},{"tipo":"emisor","f":6,"c":3,"color":"RVA","dir":"N"},{"tipo":"diana","f":2,"c":0,"color":"R"},{"tipo":"diana","f":1,"c":5,"color":"V"},{"tipo":"diana","f":6,"c":5,"color":"V"},{"tipo":"diana","f":4,"c":3,"color":"RVA"}],"inventario":{"divisor":1,"filtro:R":1,"espejo":3},"s":"==AXs8malB3clxSNsMzOvwicvNXa2lGZsMDLzszLs8malB3clxSMsIzOvwybqVGczVGLzwSM70CLSpzbyRHbpZGLxwSM"},{"id":"n14","nombre":"Las tres puertas","entradilla":"Varias entradas de luz y un orden que no se ve a la primera.","escalon":"Experto","F":7,"C":7,"tablero":[".......",".......","..#....",".......","#......",".......","......."],"fijas":[{"tipo":"emisor","f":1,"c":0,"color":"RVA","dir":"E"},{"tipo":"emisor","f":6,"c":2,"color":"V","dir":"N"},{"tipo":"diana","f":2,"c":0,"color":"A"},{"tipo":"diana","f":3,"c":5,"color":"V"},{"tipo":"diana","f":1,"c":5,"color":"RVA"}],"inventario":{"espejo":3,"divisor":1,"filtro:A":1},"s":"==wLs8malB3clxiMsMzOvwybqVGczVGLxwyM7wFLvpWZwNXZsADLzsTLsEkOvJHdslmZsEDLysDXsI3bzlmdpRGLxwSM"},{"id":"n15","nombre":"La púrpura","entradilla":"Del alba solo pasa la púrpura. Cuida por dónde la dejas entrar.","escalon":"Experto","F":7,"C":7,"tablero":[".......",".......",".......","...#...",".##....",".......","......."],"fijas":[{"tipo":"emisor","f":0,"c":2,"color":"RVA","dir":"S"},{"tipo":"emisor","f":2,"c":0,"color":"VA","dir":"E"},{"tipo":"diana","f":0,"c":0,"color":"A"},{"tipo":"diana","f":6,"c":0,"color":"RVA"}],"inventario":{"espejo":4,"filtro:RA":1},"s":"==wLs8malB3clxiMsMzOvwybqVGczVGLwwyM78CLvpWZwNXZsEDLysTLsEkU68mc0xWamxSMsEzOcxybqVGczVGLxwCM"},{"id":"n16","nombre":"El sanctasanctórum","entradilla":"El altar mayor solo se enciende cuando todo lo demás está en su sitio.","escalon":"Experto","F":8,"C":8,"tablero":["..#.....",".#.#....","........","#...#...","....#...","...#....","...#....","......#."],"fijas":[{"tipo":"emisor","f":7,"c":2,"color":"RA","dir":"N"},{"tipo":"emisor","f":0,"c":5,"color":"RV","dir":"S"},{"tipo":"diana","f":6,"c":5,"color":"RV"},{"tipo":"diana","f":7,"c":3,"color":"R"},{"tipo":"diana","f":0,"c":0,"color":"RA"}],"inventario":{"divisor":1,"espejo":4,"filtro:R":1},"s":"=8CLvpWZwNXZsQDL3sTLsIlOvJHdslmZsQDL2szLsI3bzlmdpRGL1wSN78CLvpWZwNXZsQDL1sDXs8malB3clxiMsIzOcxybqVGczVGLwwiM"}];</script>
+<script>// Espejos del Alba · el juego en el navegador. Necesita window.Espejos (motor.js), window.ARTE (arte/arte.js) y
+// window.NIVELES (los niveles, puestos por construir.js).
+(function () {
+  'use strict';
+  const E = window.Espejos, A = window.ARTE, NIVELES = window.NIVELES || [];
+  const $ = (s) => document.querySelector(s);
+  const LETRAS = 'ABCDEFGHIJ';
+  const ESCALONES = ['Fácil', 'Medio', 'Difícil', 'Experto', 'Maestro', 'Gran Maestro'];
+  const COLOR_NOMBRE = { R: 'roja', V: 'verde', A: 'azul', RV: 'amarilla', RA: 'magenta', VA: 'cian', RVA: 'blanca' };
+  const PIEZA_NOMBRE = { espejo: 'el espejo', divisor: 'el divisor', filtro: 'el filtro', cristal: 'el cristal', piedra: 'la piedra' };
+  const CLASE_NOMBRE = (cl) => { const [t, c] = cl.split(':'); return { espejo: 'Espejo', divisor: 'Divisor', piedra: 'Piedra', filtro: 'Filtro ' + (COLOR_NOMBRE[c] || ''), cristal: 'Cristal ' + (COLOR_NOMBRE[c] || '') }[t].replace('roja', 'rojo').replace('amarilla', 'amarillo').replace('blanca', 'blanco'); };
+  const casillaTxt = (N, k) => `${LETRAS[k % N.C]}${Math.floor(k / N.C) + 1}`;
+  const descifra = (s) => { try { return decodeURIComponent(escape(atob(s.split('').reverse().join('')))); } catch (e) { return ''; } };
+
+  // ---------- progreso (solo comodidad: si el navegador no deja guardar, se juega igual) ----------
+  const CLAVE = 'espejos_del_alba_v1';
+  let progreso = {};
+  try { progreso = JSON.parse(localStorage.getItem(CLAVE) || '{}') || {}; } catch (e) { progreso = {}; }
+  const guarda = () => { try { localStorage.setItem(CLAVE, JSON.stringify(progreso)); } catch (e) { /* sin guardar */ } };
+
+  // ---------- estado de la partida ----------
+  let idx = 0, N = null, nivel = null, colocadas = new Map(), oris = new Map(), sel = null, goma = false, pistas = new Set(), ganado = false;
+  const piezaDe = (cl, ori) => E.pieza(cl, E.ORIENTABLE[cl.split(':')[0]] ? (ori || '/') : null);
+  const usadas = (cl) => [...colocadas.values()].filter((p) => p.clase === cl).length;
+  const quedan = (cl) => (N.inventario[cl] || 0) - usadas(cl);
+  const totalPiezas = () => Object.values(N.inventario).reduce((a, b) => a + b, 0);
+
+  function abrir(i) {
+    idx = Math.max(0, Math.min(NIVELES.length - 1, i));
+    nivel = NIVELES[idx];
+    N = E.nivel(nivel);
+    colocadas = new Map(); pistas = new Set(); goma = false; ganado = false;
+    sel = Object.keys(N.inventario).sort()[0] || null;
+    $('#titulo-nivel').textContent = `${nivel.nombre}`;
+    $('#entradilla').textContent = nivel.entradilla || '';
+    $('#escalon-nivel').textContent = `${nivel.escalon} · nivel ${idx + 1} de ${NIVELES.length}`;
+    $('#aviso').textContent = '';
+    $('#victoria').hidden = true;
+    pinta();
+    pintaLista();
+    try { history.replaceState(null, '', '#' + nivel.id); } catch (e) { /* nada */ }
+  }
+
+  // ---------- dibujo ----------
+  const T = 100; // tamaño de casilla en el SVG
+  function pinta() {
+    const { acc, tramos } = E.luz(N, colocadas, true);
+    const svg = [];
+    const W = N.C * T, H = N.F * T;
+    // capa 1: el suelo de todas las casillas (también bajo los muros) y las peanas de las piezas fijas
+    for (let f = 0; f < N.F; f++) for (let c = 0; c < N.C; c++) {
+      const k = f * N.C + c;
+      svg.push(`<g transform="translate(${c * T},${f * T})">${A.suelo(f, c)}${N.fija[k] ? A.peana() : ''}</g>`);
+    }
+    // haces: la luz total que sale de cada (casilla, dirección), del centro de la casilla al centro de la siguiente
+    const sale = new Map();
+    for (const [k, d, col] of tramos) { const x = k * 4 + d; sale.set(x, (sale.get(x) || 0) | col); }
+    const haces = [];
+    for (const [x, col] of sale) {
+      const k = x >> 2, d = x & 3, f = Math.floor(k / N.C), c = k % N.C;
+      const x1 = c * T + T / 2, y1 = f * T + T / 2;
+      const f2 = f + E.DF[d], c2 = c + E.DC[d];
+      let lon = T;
+      if (f2 < 0 || f2 >= N.F || c2 < 0 || c2 >= N.C || N.muro[f2 * N.C + c2]) lon = T / 2;
+      haces.push(A.haz(x1, y1, x1 + E.DC[d] * lon, y1 + E.DF[d] * lon, E.aTexto(col)));
+    }
+    // capa 2: los haces (por encima de las peanas, para que se vea la luz llegar a la pieza)
+    svg.push(`<g class="haces">${haces.join('')}</g>`);
+    // capa 3: muros (empalmados con sus vecinos) y piezas, todas sin peana (la peana ya está en la capa 1)
+    const esMuro = (f, c) => f >= 0 && f < N.F && c >= 0 && c < N.C && N.muro[f * N.C + c];
+    for (let f = 0; f < N.F; f++) for (let c = 0; c < N.C; c++) {
+      if (!N.muro[f * N.C + c]) continue;
+      const v = { N: esMuro(f - 1, c), E: esMuro(f, c + 1), S: esMuro(f + 1, c), O: esMuro(f, c - 1), NE: esMuro(f - 1, c + 1), NO: esMuro(f - 1, c - 1), SE: esMuro(f + 1, c + 1), SO: esMuro(f + 1, c - 1) };
+      svg.push(`<g transform="translate(${c * T},${f * T})">${A.muro(f, c, v)}</g>`);
+    }
+    for (let k = 0; k < N.F * N.C; k++) {
+      const p = N.fija[k] || colocadas.get(k);
+      if (!p) continue;
+      const f = Math.floor(k / N.C), c = k % N.C;
+      let dib = '';
+      const fija = !!N.fija[k];
+      switch (p.tipo) {
+        case 'emisor': dib = A.emisor(E.aTexto(p.color), E.DIRS[p.dir], false); break;
+        case 'diana': { const r = E.recibe(acc, k); dib = A.diana(E.aTexto(p.color), !r ? 'apagada' : r === p.color ? 'bien' : 'mal', false); break; }
+        case 'espejo': dib = A.espejo(p.ori, false); break;
+        case 'divisor': dib = A.divisor(p.ori, false); break;
+        case 'filtro': dib = A.filtro(E.aTexto(p.color), false); break;
+        case 'cristal': dib = A.cristal(E.aTexto(p.color), false); break;
+        case 'piedra': dib = A.piedra(false); break;
+      }
+      const oscura = !fija && !E.recibe(acc, k);
+      svg.push(`<g transform="translate(${c * T},${f * T})" class="${fija ? 'fija' : 'puesta'}${oscura ? ' oscura' : ''}${pistas.has(k) ? ' pista' : ''}">${dib}${oscura ? '<rect x="4" y="4" width="92" height="92" rx="14" fill="none" stroke="#7a5ea8" stroke-width="5" stroke-dasharray="10 8"/>' : ''}${pistas.has(k) ? '<rect x="3" y="3" width="94" height="94" rx="14" fill="none" stroke="#e0a800" stroke-width="6"/>' : ''}</g>`);
+    }
+    // casillas tocables
+    for (let k = 0; k < N.F * N.C; k++) if (!N.muro[k] && !N.fija[k]) svg.push(`<rect class="toque" data-k="${k}" x="${(k % N.C) * T}" y="${Math.floor(k / N.C) * T}" width="${T}" height="${T}" fill="transparent"/>`);
+    const tab = $('#tablero');
+    tab.setAttribute('viewBox', `-34 -34 ${W + 40} ${H + 40}`);
+    const rotulos = [];
+    for (let c = 0; c < N.C; c++) rotulos.push(`<text x="${c * T + T / 2}" y="-12" class="rotulo">${LETRAS[c]}</text>`);
+    for (let f = 0; f < N.F; f++) rotulos.push(`<text x="-17" y="${f * T + T / 2 + 9}" class="rotulo">${f + 1}</text>`);
+    tab.innerHTML = `<rect x="-6" y="-6" width="${W + 12}" height="${H + 12}" rx="16" class="marco"/>${svg.join('')}${rotulos.join('')}`;
+    pintaBandeja();
+    const r = E.comprobar(N, colocadas);
+    const todas = colocadas.size === totalPiezas();
+    if (r.ok && todas && !ganado) gana();
+  }
+
+  function pintaBandeja() {
+    const b = $('#bandeja'), h = [];
+    for (const cl of Object.keys(N.inventario).sort()) {
+      const q = quedan(cl);
+      h.push(`<button class="pieza${sel === cl && !goma ? ' sel' : ''}${q ? '' : ' agotada'}" data-clase="${cl}" title="${CLASE_NOMBRE(cl)}"><svg viewBox="0 0 100 100">${A.icono(cl)}</svg><span class="cuantas">${q}</span><span class="nombre">${CLASE_NOMBRE(cl)}</span></button>`);
+    }
+    h.push(`<button class="pieza goma${goma ? ' sel' : ''}" data-goma="1" title="Quitar piezas"><svg viewBox="0 0 100 100"><rect x="22" y="30" width="56" height="40" rx="10" transform="rotate(-30 50 50)" fill="#f7b6c2" stroke="#2b2233" stroke-width="6"/><line x1="33" y1="66" x2="70" y2="66" stroke="#2b2233" stroke-width="6" stroke-linecap="round"/></svg><span class="nombre">Quitar</span></button>`);
+    b.innerHTML = h.join('');
+    const tot = totalPiezas(), puestas = colocadas.size;
+    $('#cuenta').textContent = tot ? `Piezas colocadas: ${puestas} de ${tot}` : 'Este nivel no tiene piezas que colocar';
+  }
+
+  function pintaLista() {
+    const l = $('#lista'), h = [];
+    for (const esc of ESCALONES) {
+      const del = NIVELES.map((n, i) => [n, i]).filter(([n]) => n.escalon === esc);
+      if (!del.length) continue;
+      h.push(`<div class="escalon"><h3>${esc}</h3><div class="botones">${del.map(([n, i]) => `<button class="nivel${i === idx ? ' actual' : ''}${progreso[n.id] ? ' hecho' : ''}" data-i="${i}" title="${n.nombre}">${progreso[n.id] ? '✔' : i + 1}</button>`).join('')}</div></div>`);
+    }
+    l.innerHTML = h.join('');
+  }
+
+  // ---------- jugar ----------
+  function toca(k) {
+    if (ganado) return;
+    $('#aviso').textContent = '';
+    const p = colocadas.get(k);
+    if (p) {
+      if (pistas.has(k)) { $('#aviso').textContent = 'Esa pieza la ha puesto una pista: está bien y no se mueve.'; return; }
+      if (goma || !E.ORIENTABLE[p.tipo]) { colocadas.delete(k); }
+      else colocadas.set(k, piezaDe(p.clase, p.ori === '/' ? '\\' : '/'));
+      pinta(); return;
+    }
+    if (goma) return;
+    if (!sel) return;
+    if (quedan(sel) <= 0) { $('#aviso').textContent = 'No te quedan piezas de esa clase: quita una o elige otra.'; return; }
+    colocadas.set(k, piezaDe(sel, oris.get(sel) || '/'));
+    if (quedan(sel) <= 0) { const otra = Object.keys(N.inventario).sort().find((cl) => quedan(cl) > 0); if (otra) sel = otra; }
+    pinta();
+  }
+
+  function comprueba() {
+    const r = E.comprobar(N, colocadas), msg = [];
+    const faltan = totalPiezas() - colocadas.size;
+    for (const d of r.dianas) {
+      const quiere = COLOR_NOMBRE[E.aTexto(d.quiere)];
+      if (!d.recibe) msg.push(`A la diana de ${casillaTxt(N, d.k)} no le llega luz (quiere luz ${quiere}).`);
+      else if (d.recibe !== d.quiere) msg.push(`La diana de ${casillaTxt(N, d.k)} quiere luz ${quiere} y le llega luz ${COLOR_NOMBRE[E.aTexto(d.recibe)]}.`);
+    }
+    for (const p of r.piezas) if (!p.luz) msg.push(`${PIEZA_NOMBRE[colocadas.get(p.k).tipo].replace(/^./, (x) => x.toUpperCase())} de ${casillaTxt(N, p.k)} está a oscuras: todas las piezas tienen que recibir luz.`);
+    if (faltan > 0) msg.push(`Te ${faltan === 1 ? 'queda 1 pieza' : `quedan ${faltan} piezas`} por colocar: hay que usarlas todas.`);
+    $('#aviso').innerHTML = msg.length ? msg.map((m) => `• ${m}`).join('<br>') : '¡Todo encaja!';
+  }
+
+  function pista() {
+    if (ganado) return;
+    const sol = descifra(nivel.s).split(';').filter(Boolean).map((t) => { const [f, c, cl, o] = t.split(','); return { k: +f * N.C + +c, cl, o: o === '-' ? null : o }; });
+    const bien = (s) => { const p = colocadas.get(s.k); return p && p.clase === s.cl && (p.ori || null) === s.o; };
+    const s = sol.find((x) => !bien(x));
+    if (!s) { comprueba(); return; }
+    // si no queda pieza de esa clase, se devuelve a la bandeja una mal puesta
+    colocadas.delete(s.k);
+    if (quedan(s.cl) <= 0) for (const [k, p] of colocadas) if (p.clase === s.cl && !pistas.has(k) && !sol.some((x) => x.k === k && bien(x))) { colocadas.delete(k); break; }
+    colocadas.set(s.k, piezaDe(s.cl, s.o));
+    pistas.add(s.k);
+    $('#aviso').textContent = `Pista: ${CLASE_NOMBRE(s.cl).toLowerCase()} en ${casillaTxt(N, s.k)}${s.o ? ` (${s.o === '/' ? 'subiendo hacia la derecha' : 'bajando hacia la derecha'})` : ''}.`;
+    pinta();
+  }
+
+  function gana() {
+    ganado = true;
+    progreso[nivel.id] = { hecho: true, pistas: pistas.size };
+    guarda();
+    pintaLista();
+    $('#victoria-texto').textContent = pistas.size ? `Lo has resuelto con ${pistas.size === 1 ? 'una pista' : pistas.size + ' pistas'}.` : '¡Sin ninguna pista!';
+    $('#siguiente').hidden = idx >= NIVELES.length - 1;
+    $('#victoria').hidden = false;
+  }
+
+  // ---------- eventos ----------
+  $('#tablero').addEventListener('click', (ev) => { const t = ev.target.closest('.toque'); if (t) toca(+t.dataset.k); });
+  $('#bandeja').addEventListener('click', (ev) => {
+    const b = ev.target.closest('button'); if (!b) return;
+    if (b.dataset.goma) { goma = !goma; } else { sel = b.dataset.clase; goma = false; }
+    pintaBandeja();
+  });
+  $('#lista').addEventListener('click', (ev) => { const b = ev.target.closest('button.nivel'); if (b) abrir(+b.dataset.i); });
+  $('#reiniciar').addEventListener('click', () => { colocadas = new Map([...colocadas].filter(([k]) => pistas.has(k))); ganado = false; $('#victoria').hidden = true; $('#aviso').textContent = ''; pinta(); });
+  $('#comprobar').addEventListener('click', comprueba);
+  $('#pista').addEventListener('click', pista);
+  $('#siguiente').addEventListener('click', () => abrir(idx + 1));
+  $('#cerrar').addEventListener('click', () => { $('#victoria').hidden = true; });
+  $('#reglas-boton').addEventListener('click', () => { const r = $('#reglas'); r.hidden = !r.hidden; });
+
+  // fichas de los siete colores en «Cómo se juega» (muestra del color, su runa y su nombre)
+  const MEZCLAS = [['R', 'rojo'], ['V', 'verde'], ['A', 'azul'], ['RV', 'amarillo = rojo + verde'], ['RA', 'magenta = rojo + azul'], ['VA', 'cian = verde + azul'], ['RVA', 'blanco = los tres']];
+  const col = document.querySelector('#colores');
+  if (col) col.innerHTML = MEZCLAS.map(([c, n]) => `<span class="ficha"><span class="muestra" style="background:${A.COLORES[c]}"></span><svg viewBox="0 0 100 100">${A.simbolo(c)}</svg>${n}</span>`).join('');
+  const porHash = NIVELES.findIndex((n) => '#' + n.id === location.hash);
+  const primeroSinHacer = NIVELES.findIndex((n) => !progreso[n.id]);
+  abrir(porHash >= 0 ? porHash : Math.max(0, primeroSinHacer));
+  window.LISTO = true;
+})();
+</script>
+</body>
+</html>
